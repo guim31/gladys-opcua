@@ -139,6 +139,9 @@ export class OpcuaHub {
       } catch (err) {
         // Most often the link dropped while reading: its 'down' follows.
         logger.debug(`Handling the OPC UA link failed: ${err.message}`);
+        if (connection !== this.connection) {
+          return; // stopped by a configuration change, not a lost link
+        }
         await this.#onDown({ code: 'unreachable' }).catch(() => {});
       }
     });

@@ -182,7 +182,7 @@ export function toWrite(variable, input) {
   }
   // Float noise of the scale (21.5 / 0.1) is fine; a real fraction is refused.
   const rounded = Math.round(raw);
-  if (Math.abs(raw - rounded) > 1e-6) {
+  if (Math.abs(raw - rounded) > 1e-9 * Math.max(1, Math.abs(raw))) {
     throw new WriteError('notInteger', { type, value: String(input) });
   }
   const [min, max] = INTEGER_RANGES[type];
