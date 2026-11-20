@@ -166,6 +166,12 @@ export function toWrite(variable, input) {
     }
     return { type, value: number };
   }
+  if (
+    (variable.min !== undefined && number < variable.min) ||
+    (variable.max !== undefined && number > variable.max)
+  ) {
+    throw new WriteError('outOfBounds', { min: variable.min ?? '-∞', max: variable.max ?? '∞' });
+  }
   let raw = number;
   if (NUMERIC_KINDS.includes(variable.kind)) {
     const { factor } = publishedUnit(variable.kind, variable.unit ?? definition.units[0]);
@@ -174,7 +180,11 @@ export function toWrite(variable, input) {
   if (FLOATS.includes(type)) {
     return { type, value: raw };
   }
+  // Float noise of the scale (21.5 / 0.1) is fine; a real fraction is refused.
   const rounded = Math.round(raw);
+  if (Math.abs(raw - rounded) > 1e-6) {
+    throw new WriteError('notInteger', { type, value: String(input) });
+  }
   const [min, max] = INTEGER_RANGES[type];
   if (rounded < min || rounded > max) {
     throw new WriteError('outOfRange', { min, max, type });

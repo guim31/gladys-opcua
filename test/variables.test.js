@@ -126,3 +126,15 @@ test('names are made distinct and fit 40 characters', () => {
   assert.equal(second.length, 40);
   assert.ok(second.endsWith(' 2'));
 });
+
+test('"Name:NodeId" without a space is accepted', () => {
+  const { variables, errors } = parseVariables('Pump:ns=3;s=Pump switch; Temp:i=2258');
+  assert.deepEqual(errors, []);
+  assert.deepEqual(
+    variables.map((variable) => [variable.name, variable.nodeId]),
+    [
+      ['Pump', 'ns=3;s=Pump'],
+      ['Temp', 'ns=0;i=2258'],
+    ],
+  );
+});

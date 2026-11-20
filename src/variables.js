@@ -105,9 +105,14 @@ export function parseVariables(text) {
     let name = null;
     let rest = raw;
     const colon = raw.indexOf(': ');
+    // "Name:ns=3;s=X" (no space) is a common slip: accept it too.
+    const tight = raw.match(/^([^:]+?):((ns=\d+;)?(i|s|g|b)=.*)$/);
     if (colon > 0 && !NODE_ID_START.test(raw)) {
       name = raw.slice(0, colon).trim();
       rest = raw.slice(colon + 2);
+    } else if (tight && !NODE_ID_START.test(raw)) {
+      name = tight[1].trim();
+      rest = tight[2];
     } else if (raw.endsWith(':')) {
       fail('noNodeId', {}, raw.slice(0, -1));
       return;

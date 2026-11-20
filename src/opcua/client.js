@@ -170,10 +170,18 @@ class OpcuaConnection extends EventEmitter {
     const generation = ++this.generation;
     const { endpointUrl, securityMode, securityPolicy, userName, password } = this.options;
     const secure = securityMode !== 'none';
+    let certificateManager;
+    try {
+      certificateManager = await this.#certificateManager();
+    } catch (err) {
+      this.#down(err);
+      this.#retryLater(generation);
+      return;
+    }
     const client = OPCUAClient.create({
       applicationName: 'Gladys Assistant OPC UA',
       applicationUri: APPLICATION_URI,
-      clientCertificateManager: await this.#certificateManager(),
+      clientCertificateManager: certificateManager,
       securityMode: SECURITY_MODES[securityMode],
       securityPolicy: secure ? SECURITY_POLICIES[securityPolicy] : SecurityPolicy.None,
       // Many PLCs advertise their own host name or another IP in their
@@ -200,7 +208,18 @@ class OpcuaConnection extends EventEmitter {
     client.on('connection_lost', () => this.#down(new Error('connection lost')));
     client.on('connection_reestablished', () => this.#up());
 
-    await client.connect(endpointUrl);
+    try {
+      await client.connect(endpointUrl);
+    } catch (err) {
+      // A ServiceFault (certificate not trusted yet, security refused) is not
+      // retried by node-opcua: start over later, the user may trust it meanwhile.
+      if (generation === this.generation) {
+        await this.#close();
+        this.#down(err);
+        this.#retryLater(generation);
+      }
+      return;
+    }
     if (generation !== this.generation) {
       return;
     }

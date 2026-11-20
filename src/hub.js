@@ -74,14 +74,16 @@ export class OpcuaHub {
     this.flushTimer = null;
     this.lastFlushAt = 0;
     this.flushing = Promise.resolve();
-    this.heartbeatTimer = null;
     this.events = Promise.resolve();
+    this.heartbeatTimer = null;
   }
 
   // --- Configuration and connection ----------------------------------------
 
   async configure(config) {
     await this.#stopConnection();
+    // A reading of the old server still running must not land on the new one.
+    await this.events;
     this.config = config;
     this.latest.clear();
     this.status = { connected: null, code: null, lastValueAt: null };
@@ -179,7 +181,12 @@ export class OpcuaHub {
   }
 
   async #onUp() {
-    const results = await this.connection.readVariables(this.variables.map((v) => v.nodeId));
+    const { connection, variables, endpoint } = this;
+    const stale = () => connection !== this.connection;
+    const results = await connection.readVariables(variables.map((v) => v.nodeId));
+    if (stale()) {
+      return;
+    }
     const cache = {};
     for (const [index, variable] of this.variables.entries()) {
       const result = results[index];
@@ -197,7 +204,10 @@ export class OpcuaHub {
       cache[variable.nodeId] = info;
       this.#resolve(variable, info);
     }
-    await this.store.set(this.endpoint.platformId, cache);
+    await this.store.set(endpoint.platformId, cache);
+    if (stale()) {
+      return;
+    }
     await this.publishDevice();
 
     const watched = this.variables.filter((variable) => variable.resolved);
@@ -205,6 +215,9 @@ export class OpcuaHub {
       watched.map(({ nodeId }) => ({ nodeId })),
       (nodeId, read) => this.#onValue(nodeId, read),
     );
+    if (stale()) {
+      return;
+    }
     // The values read with the types: no wait for the first notification.
     for (const [index, variable] of this.variables.entries()) {
       if (variable.resolved && results[index].valueStatus) {
@@ -237,12 +250,17 @@ export class OpcuaHub {
   }
 
   async #onDown({ code }) {
+    if (!this.endpoint) {
+      return;
+    }
     const wasUp = this.status.connected === true;
     if (this.status.connected === false && this.status.code === code) {
       return;
     }
     this.status.connected = false;
     this.status.code = code;
+    // Old values must not be re-sent by the heartbeat while the server is away.
+    this.latest.clear();
     this.issues.fail(
       'link',
       `OPC UA server ${this.endpoint.host}:${this.endpoint.port} unavailable (${code})`,

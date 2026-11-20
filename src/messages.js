@@ -215,6 +215,19 @@ export const WRITE_ERRORS = {
     de: ({ type, min, max }) => `Außerhalb des Bereichs eines ${type} (${min} bis ${max}).`,
     es: ({ type, min, max }) => `Fuera de rango para un ${type} (${min} a ${max}).`,
   },
+  outOfBounds: {
+    en: ({ min, max }) => `Outside the bounds declared for this variable (${min} to ${max}).`,
+    fr: ({ min, max }) => `Hors des bornes déclarées pour cette variable (${min} à ${max}).`,
+    de: ({ min, max }) =>
+      `Außerhalb der für diese Variable deklarierten Grenzen (${min} bis ${max}).`,
+    es: ({ min, max }) => `Fuera de los límites declarados para esta variable (${min} a ${max}).`,
+  },
+  notInteger: {
+    en: ({ type, value }) => `"${value}": a ${type} takes whole numbers only.`,
+    fr: ({ type, value }) => `« ${value} » : un ${type} n'accepte que des nombres entiers.`,
+    de: ({ type, value }) => `„${value}“: Ein ${type} nimmt nur ganze Zahlen an.`,
+    es: ({ type, value }) => `«${value}»: un ${type} solo admite números enteros.`,
+  },
   refused: {
     en: ({ status }) => `The server refused the write (${status}).`,
     fr: ({ status }) => `Le serveur a refusé l'écriture (${status}).`,

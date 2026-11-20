@@ -108,3 +108,16 @@ test('writes: strings as they are, other types refused', () => {
     code: 'typeNotWritable',
   });
 });
+
+test('writes: the declared min and max bound the value, a fraction is refused for an integer', () => {
+  assert.throws(() => write({ type: 'Float', kind: 'setpoint', min: 5, max: 60 }, 500), {
+    code: 'outOfBounds',
+  });
+  assert.throws(() => write({ type: 'Int16', min: 0 }, -1), { code: 'outOfBounds' });
+  assert.deepEqual(write({ type: 'Float', kind: 'setpoint', min: 5, max: 60 }, 60), {
+    type: 'Float',
+    value: 60,
+  });
+  assert.throws(() => write({ type: 'Int16' }, 21.5), { code: 'notInteger' });
+  assert.deepEqual(write({ type: 'Int16', scale: 0.1 }, 21.3), { type: 'Int16', value: 213 });
+});

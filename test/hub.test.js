@@ -304,3 +304,52 @@ test('no address: the status asks for it, and nothing is discovered', async () =
     await world.stop();
   }
 });
+
+test('a configuration change during the reading of the old server does not mix the two', async () => {
+  const world = await opcPlc();
+  try {
+    // The old server answers slowly; the new one never answers.
+    const old = world.server.connection;
+    let release;
+    old.readVariables = async function slow(...args) {
+      await new Promise((resolve) => {
+        release = resolve;
+      });
+      return Object.getPrototypeOf(old).readVariables.apply(old, args);
+    };
+    world.server.drop();
+    world.server.restore(); // 'up' again: a slow reading starts
+    await new Promise((resolve) => setImmediate(resolve));
+    world.server.refuse = 'unreachable';
+    const reconfigured = world.fake.configUpdated({
+      endpoint_url: 'opc.tcp://192.0.2.20:4841',
+      variables: 'B: ns=3;s=AlternatingBoolean',
+    });
+    release();
+    await reconfigured;
+    await world.settle();
+    assert.equal(world.hub.status.connected, false);
+    assert.equal(world.fake.connectionStatus.connected, false);
+    assert.equal(
+      await world.store.get('192.0.2.20-4841'),
+      undefined,
+      'nothing cached for the new server',
+    );
+  } finally {
+    await world.stop();
+  }
+});
+
+test('the values of a lost server are not re-sent by the heartbeat', async () => {
+  const world = await opcPlc();
+  try {
+    world.server.drop();
+    await world.settle();
+    const before = world.fake.states.length;
+    world.gladys.forgetPublishedStates();
+    await world.hub.flush();
+    assert.equal(world.fake.states.length, before);
+  } finally {
+    await world.stop();
+  }
+});
