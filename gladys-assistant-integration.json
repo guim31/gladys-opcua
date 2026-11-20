@@ -1,101 +1,508 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "OPC UA",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Read and write the variables of an OPC UA server: PLCs (Siemens, Beckhoff, WAGO), gateways.",
+    "fr": "Lire et écrire les variables d'un serveur OPC UA : automates (Siemens, Beckhoff, WAGO), passerelles.",
+    "de": "Variablen eines OPC-UA-Servers lesen und schreiben: SPS (Siemens, Beckhoff, WAGO), Gateways.",
+    "es": "Leer y escribir las variables de un servidor OPC UA: PLC (Siemens, Beckhoff, WAGO), pasarelas."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-opcua:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-opcua/main/cover.png",
+  "categories": ["protocols"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Getting started",
+        "fr": "Pour commencer",
+        "de": "Erste Schritte",
+        "es": "Para empezar"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Enter the address of the OPC UA server, save, then use \"Browse the server\" to find the NodeIds of its variables. Declare the variables you want, save again, and add the server from the Discovery tab: each variable becomes a feature, updated by subscription.",
+        "fr": "Saisissez l'adresse du serveur OPC UA, enregistrez, puis utilisez « Parcourir le serveur » pour trouver les NodeId de ses variables. Déclarez les variables voulues, enregistrez de nouveau et ajoutez le serveur depuis l'onglet Découverte : chaque variable devient une fonctionnalité, mise à jour par abonnement.",
+        "de": "Gib die Adresse des OPC-UA-Servers ein, speichere und nutze dann „Server durchsuchen“, um die NodeIds seiner Variablen zu finden. Deklariere die gewünschten Variablen, speichere erneut und füge den Server im Tab „Entdecken“ hinzu: Jede Variable wird eine Funktion, per Abonnement aktualisiert.",
+        "es": "Introduzca la dirección del servidor OPC UA, guarde y luego utilice «Explorar el servidor» para encontrar los NodeId de sus variables. Declare las variables deseadas, guarde de nuevo y añada el servidor desde la pestaña Descubrimiento: cada variable se convierte en una función, actualizada por suscripción."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-opcua/blob/main/docs/en.md#variables",
+          "label": {
+            "en": "Variables syntax",
+            "fr": "Syntaxe des variables",
+            "de": "Syntax der Variablen",
+            "es": "Sintaxis de las variables"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the messages",
+        "fr": "Langue des messages",
+        "de": "Sprache der Meldungen",
+        "es": "Idioma de los mensajes"
+      },
+      "description": {
+        "en": "Used for the texts given to the scenes.",
+        "fr": "Utilisée pour les textes transmis aux scènes.",
+        "de": "Wird für die an Szenen übergebenen Texte verwendet.",
+        "es": "Se utiliza para los textos transmitidos a las escenas."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "fr",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "server",
+      "type": "section",
+      "label": {
+        "en": "Server",
+        "fr": "Serveur",
+        "de": "Server",
+        "es": "Servidor"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Give the PLC or the gateway a fixed IP address: Gladys identifies the server by its address and port.",
+        "fr": "Donnez une adresse IP fixe à l'automate ou à la passerelle : Gladys identifie le serveur par son adresse et son port.",
+        "de": "Gib der SPS oder dem Gateway eine feste IP-Adresse: Gladys erkennt den Server an Adresse und Port.",
+        "es": "Asigne una dirección IP fija al PLC o a la pasarela: Gladys identifica el servidor por su dirección y su puerto."
+      }
+    },
+    {
+      "key": "endpoint_url",
+      "type": "string",
+      "label": {
+        "en": "Server address",
+        "fr": "Adresse du serveur",
+        "de": "Serveradresse",
+        "es": "Dirección del servidor"
+      },
+      "description": {
+        "en": "opc.tcp://, the IP address and the port (4840 by default, 4852 on Beckhoff, 49320 on Kepware).",
+        "fr": "opc.tcp://, l'adresse IP et le port (4840 par défaut, 4852 sur Beckhoff, 49320 sur Kepware).",
+        "de": "opc.tcp://, die IP-Adresse und der Port (Standard 4840, 4852 bei Beckhoff, 49320 bei Kepware).",
+        "es": "opc.tcp://, la dirección IP y el puerto (4840 por defecto, 4852 en Beckhoff, 49320 en Kepware)."
+      },
+      "placeholder": {
+        "en": "e.g. opc.tcp://192.168.1.50:4840",
+        "fr": "ex. opc.tcp://192.168.1.50:4840",
+        "de": "z. B. opc.tcp://192.168.1.50:4840",
+        "es": "p. ej. opc.tcp://192.168.1.50:4840"
+      },
+      "required": false
+    },
+    {
+      "key": "security_mode",
+      "type": "select",
+      "label": {
+        "en": "Security mode",
+        "fr": "Mode de sécurité",
+        "de": "Sicherheitsmodus",
+        "es": "Modo de seguridad"
+      },
+      "description": {
+        "en": "With Sign or Sign & Encrypt, the server must trust the Gladys certificate once: see the documentation.",
+        "fr": "Avec Signer ou Signer et chiffrer, le serveur doit approuver une fois le certificat de Gladys : voir la documentation.",
+        "de": "Mit Signieren oder Signieren und Verschlüsseln muss der Server dem Gladys-Zertifikat einmal vertrauen: siehe Dokumentation.",
+        "es": "Con Firmar o Firmar y cifrar, el servidor debe aprobar una vez el certificado de Gladys: consulte la documentación."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": {
+            "en": "None",
+            "fr": "Aucune",
+            "de": "Keine",
+            "es": "Ninguna"
+          }
+        },
+        {
+          "value": "sign",
+          "label": {
+            "en": "Sign",
+            "fr": "Signer",
+            "de": "Signieren",
+            "es": "Firmar"
+          }
+        },
+        {
+          "value": "sign_and_encrypt",
+          "label": {
+            "en": "Sign & Encrypt",
+            "fr": "Signer et chiffrer",
+            "de": "Signieren und Verschlüsseln",
+            "es": "Firmar y cifrar"
+          }
+        }
+      ]
+    },
+    {
+      "key": "security_policy",
+      "type": "select",
+      "label": {
+        "en": "Security policy",
+        "fr": "Politique de sécurité",
+        "de": "Sicherheitsrichtlinie",
+        "es": "Política de seguridad"
+      },
+      "description": {
+        "en": "Ignored with the None mode.",
+        "fr": "Ignorée avec le mode Aucune.",
+        "de": "Wird im Modus Keine ignoriert.",
+        "es": "Se ignora con el modo Ninguna."
+      },
+      "required": false,
+      "default": "basic256sha256",
+      "options": [
+        {
+          "value": "basic256sha256",
+          "label": {
+            "en": "Basic256Sha256",
+            "fr": "Basic256Sha256",
+            "de": "Basic256Sha256",
+            "es": "Basic256Sha256"
+          }
+        },
+        {
+          "value": "aes128_sha256_rsaoaep",
+          "label": {
+            "en": "Aes128_Sha256_RsaOaep",
+            "fr": "Aes128_Sha256_RsaOaep",
+            "de": "Aes128_Sha256_RsaOaep",
+            "es": "Aes128_Sha256_RsaOaep"
+          }
+        },
+        {
+          "value": "aes256_sha256_rsapss",
+          "label": {
+            "en": "Aes256_Sha256_RsaPss",
+            "fr": "Aes256_Sha256_RsaPss",
+            "de": "Aes256_Sha256_RsaPss",
+            "es": "Aes256_Sha256_RsaPss"
+          }
+        }
+      ]
+    },
+    {
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "User name",
+        "fr": "Nom d'utilisateur",
+        "de": "Benutzername",
+        "es": "Nombre de usuario"
+      },
+      "description": {
+        "en": "Empty: anonymous access.",
+        "fr": "Vide : accès anonyme.",
+        "de": "Leer: anonymer Zugang.",
+        "es": "Vacío: acceso anónimo."
+      },
+      "required": false
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
+      },
+      "required": false
+    },
+    {
+      "key": "variables_section",
+      "type": "section",
+      "label": {
+        "en": "Variables",
+        "fr": "Variables",
+        "de": "Variablen",
+        "es": "Variables"
+      },
+      "description": {
+        "en": "Up to 100 variables. Writing a wrong variable can stop or damage an installation: declare \"write\" only what Gladys must change.",
+        "fr": "Jusqu'à 100 variables. Écrire une mauvaise variable peut arrêter ou abîmer une installation : ne déclarez « write » que ce que Gladys doit modifier.",
+        "de": "Bis zu 100 Variablen. Eine falsche Variable zu schreiben kann eine Anlage stoppen oder beschädigen: Deklariere nur als „write“, was Gladys ändern muss.",
+        "es": "Hasta 100 variables. Escribir una variable equivocada puede detener o dañar una instalación: declare «write» solo lo que Gladys deba cambiar."
+      }
+    },
+    {
+      "key": "variables",
+      "type": "string",
+      "label": {
+        "en": "Variables",
+        "fr": "Variables",
+        "de": "Variablen",
+        "es": "Variables"
+      },
+      "description": {
+        "en": "Entries separated by semicolons: name: NodeId, then kind, write and options. Kinds: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value, binary, switch, setpoint, text (default: from the type). Options: scale= offset= unit= min= max= precision=.",
+        "fr": "Entrées séparées par des points-virgules : nom: NodeId, puis nature, write et options. Natures : temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value, binary, switch, setpoint, text (par défaut : selon le type). Options : scale= offset= unit= min= max= precision=.",
+        "de": "Einträge durch Semikolons getrennt: Name: NodeId, dann Art, write und Optionen. Arten: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value, binary, switch, setpoint, text (Standard: nach Typ). Optionen: scale= offset= unit= min= max= precision=.",
+        "es": "Entradas separadas por punto y coma: nombre: NodeId, luego tipo, write y opciones. Tipos: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value, binary, switch, setpoint, text (por defecto: según el tipo). Opciones: scale= offset= unit= min= max= precision=."
+      },
+      "placeholder": {
+        "en": "Flow: ns=3;s=FlowTemp temperature; Pump: ns=3;s=Pump switch",
+        "fr": "Départ: ns=3;s=FlowTemp temperature; Pompe: ns=3;s=Pump switch",
+        "de": "Vorlauf: ns=3;s=FlowTemp temperature; Pumpe: ns=3;s=Pump switch",
+        "es": "Ida: ns=3;s=FlowTemp temperature; Bomba: ns=3;s=Pump switch"
+      },
+      "required": false
+    },
+    {
+      "key": "interval",
+      "type": "select",
+      "label": {
+        "en": "Sampling interval",
+        "fr": "Intervalle d'échantillonnage",
+        "de": "Abtastintervall",
+        "es": "Intervalo de muestreo"
+      },
+      "description": {
+        "en": "How often the server checks the variables for changes. Gladys accepts 300 values a minute: with many variables, the values are sent less often.",
+        "fr": "Fréquence à laquelle le serveur cherche les changements. Gladys accepte 300 valeurs par minute : avec beaucoup de variables, elles sont envoyées moins souvent.",
+        "de": "Wie oft der Server die Variablen auf Änderungen prüft. Gladys nimmt 300 Werte pro Minute an: Bei vielen Variablen werden sie seltener gesendet.",
+        "es": "Frecuencia con la que el servidor busca cambios. Gladys acepta 300 valores por minuto: con muchas variables, se envían con menos frecuencia."
+      },
+      "required": false,
+      "default": "5",
+      "options": [
+        {
+          "value": "1",
+          "label": {
+            "en": "1 second",
+            "fr": "1 seconde",
+            "de": "1 Sekunde",
+            "es": "1 segundo"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "en": "2 seconds",
+            "fr": "2 secondes",
+            "de": "2 Sekunden",
+            "es": "2 segundos"
+          }
+        },
+        {
+          "value": "5",
+          "label": {
+            "en": "5 seconds",
+            "fr": "5 secondes",
+            "de": "5 Sekunden",
+            "es": "5 segundos"
+          }
+        },
+        {
+          "value": "10",
+          "label": {
+            "en": "10 seconds",
+            "fr": "10 secondes",
+            "de": "10 Sekunden",
+            "es": "10 segundos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "30 seconds",
+            "fr": "30 secondes",
+            "de": "30 Sekunden",
+            "es": "30 segundos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        }
+      ]
+    },
+    {
+      "key": "allow_write",
+      "type": "boolean",
+      "label": {
+        "en": "Allow writing",
+        "fr": "Autoriser l'écriture",
+        "de": "Schreiben erlauben",
+        "es": "Permitir la escritura"
+      },
+      "description": {
+        "en": "Off by default. When on, only the variables declared \"write\" (or switch, setpoint) can be changed from Gladys, and only if the server allows it.",
+        "fr": "Désactivée par défaut. Activée, seules les variables déclarées « write » (ou switch, setpoint) peuvent être modifiées depuis Gladys, et seulement si le serveur l'autorise.",
+        "de": "Standardmäßig aus. Wenn aktiv, können nur die als „write“ (oder switch, setpoint) deklarierten Variablen aus Gladys geändert werden, und nur wenn der Server es erlaubt.",
+        "es": "Desactivada por defecto. Activada, solo las variables declaradas «write» (o switch, setpoint) pueden modificarse desde Gladys, y solo si el servidor lo permite."
+      },
+      "required": false,
+      "default": false
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "browse",
+      "label": {
+        "en": "Browse the server",
+        "fr": "Parcourir le serveur",
+        "de": "Server durchsuchen",
+        "es": "Explorar el servidor"
+      },
+      "description": {
+        "en": "Lists the variables (60 at most) with their NodeId, type and access, ready to copy into the Variables field.",
+        "fr": "Liste les variables (60 au plus) avec leur NodeId, leur type et leur accès, prêtes à copier dans le champ Variables.",
+        "de": "Listet die Variablen (höchstens 60) mit NodeId, Typ und Zugriff auf, bereit zum Kopieren ins Feld Variablen.",
+        "es": "Enumera las variables (60 como máximo) con su NodeId, su tipo y su acceso, listas para copiar en el campo Variables."
+      },
+      "timeout_seconds": 60,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "key": "node",
+          "type": "string",
+          "label": {
+            "en": "Start node (optional)",
+            "fr": "Nœud de départ (facultatif)",
+            "de": "Startknoten (optional)",
+            "es": "Nodo de inicio (opcional)"
+          },
+          "description": {
+            "en": "Empty: the Objects folder. Give the NodeId of a folder to see deeper.",
+            "fr": "Vide : le dossier Objects. Indiquez le NodeId d'un dossier pour voir plus loin.",
+            "de": "Leer: der Ordner Objects. Gib die NodeId eines Ordners an, um tiefer zu sehen.",
+            "es": "Vacío: la carpeta Objects. Indique el NodeId de una carpeta para ver más."
+          },
+          "placeholder": {
+            "en": "e.g. ns=3;s=Telemetry",
+            "fr": "ex. ns=3;s=Telemetry",
+            "de": "z. B. ns=3;s=Telemetry",
+            "es": "p. ej. ns=3;s=Telemetry"
+          },
+          "required": false
+        }
+      ]
+    },
+    {
+      "key": "check_config",
+      "label": {
+        "en": "Check the configuration",
+        "fr": "Vérifier la configuration",
+        "de": "Konfiguration prüfen",
+        "es": "Comprobar la configuración"
+      },
+      "description": {
+        "en": "Says whether the server answers, and lists the mistakes entry by entry.",
+        "fr": "Dit si le serveur répond, et liste les erreurs entrée par entrée.",
+        "de": "Sagt, ob der Server antwortet, und listet die Fehler Eintrag für Eintrag auf.",
+        "es": "Indica si el servidor responde y enumera los errores entrada por entrada."
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "key": "write_value",
+      "label": {
+        "en": "Write a value",
+        "fr": "Écrire une valeur",
+        "de": "Wert schreiben",
+        "es": "Escribir un valor"
+      },
+      "description": {
+        "en": "Writes to a variable declared \"write\", once writing is allowed.",
+        "fr": "Écrit dans une variable déclarée « write », une fois l'écriture autorisée.",
+        "de": "Schreibt in eine als „write“ deklarierte Variable, sobald Schreiben erlaubt ist.",
+        "es": "Escribe en una variable declarada «write», una vez permitida la escritura."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "variable",
+          "type": "string",
+          "label": {
+            "en": "Variable",
+            "fr": "Variable",
+            "de": "Variable",
+            "es": "Variable"
+          },
+          "description": {
+            "en": "Its name or its NodeId.",
+            "fr": "Son nom ou son NodeId.",
+            "de": "Name oder NodeId der Variable.",
+            "es": "Su nombre o su NodeId."
+          },
+          "placeholder": {
+            "en": "e.g. Boiler setpoint",
+            "fr": "ex. Consigne chaudière",
+            "de": "z. B. Kessel-Sollwert",
+            "es": "p. ej. Consigna caldera"
+          },
+          "required": true
+        },
+        {
+          "key": "value",
+          "type": "string",
+          "label": {
+            "en": "Value",
+            "fr": "Valeur",
+            "de": "Wert",
+            "es": "Valor"
+          },
+          "description": {
+            "en": "A number, 0 / 1 (or true / false), or a text for a String variable.",
+            "fr": "Un nombre, 0 / 1 (ou true / false), ou un texte pour une variable String.",
+            "de": "Eine Zahl, 0 / 1 (oder true / false) oder ein Text für eine String-Variable.",
+            "es": "Un número, 0 / 1 (o true / false), o un texto para una variable String."
+          },
           "required": true
         }
       ]
@@ -103,75 +510,228 @@
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "server_disconnected",
+      "label": {
+        "en": "The OPC UA server is lost",
+        "fr": "Le serveur OPC UA est perdu",
+        "de": "Der OPC-UA-Server ist weg",
+        "es": "Se pierde el servidor OPC UA"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The connection to the server dropped (PLC off, network cut, server restarted).",
+        "fr": "La connexion au serveur est tombée (automate éteint, réseau coupé, serveur redémarré).",
+        "de": "Die Verbindung zum Server ist abgebrochen (SPS aus, Netzwerk getrennt, Server neu gestartet).",
+        "es": "Se cayó la conexión con el servidor (PLC apagado, red cortada, servidor reiniciado)."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "device_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Servername",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
+          }
+        }
+      ]
+    },
+    {
+      "key": "server_reconnected",
+      "label": {
+        "en": "The OPC UA server is back",
+        "fr": "Le serveur OPC UA est revenu",
+        "de": "Der OPC-UA-Server ist zurück",
+        "es": "El servidor OPC UA ha vuelto"
+      },
+      "description": {
+        "en": "The connection to the server is up again after a loss.",
+        "fr": "La connexion au serveur est rétablie après une perte.",
+        "de": "Die Verbindung zum Server steht nach einem Abbruch wieder.",
+        "es": "La conexión con el servidor se ha restablecido tras una pérdida."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Servername",
+            "es": "Nombre del servidor"
+          }
+        }
+      ]
+    },
+    {
+      "key": "variable_bad_status",
+      "label": {
+        "en": "An OPC UA variable turns bad",
+        "fr": "Une variable OPC UA passe en mauvais état",
+        "de": "Eine OPC-UA-Variable wird schlecht",
+        "es": "Una variable OPC UA pasa a mal estado"
+      },
+      "description": {
+        "en": "The server reports a bad status for a variable (sensor fault, PLC input lost, value no longer valid).",
+        "fr": "Le serveur signale un mauvais état pour une variable (capteur en défaut, entrée d'automate perdue, valeur plus valide).",
+        "de": "Der Server meldet einen schlechten Status für eine Variable (Sensorfehler, SPS-Eingang verloren, Wert nicht mehr gültig).",
+        "es": "El servidor indica un mal estado para una variable (sensor en fallo, entrada de PLC perdida, valor ya no válido)."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Servername",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "variable_name",
+          "type": "string",
+          "label": {
+            "en": "Variable name",
+            "fr": "Nom de la variable",
+            "de": "Name der Variable",
+            "es": "Nombre de la variable"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "OPC UA status",
+            "fr": "État OPC UA",
+            "de": "OPC-UA-Status",
+            "es": "Estado OPC UA"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "write_value",
+      "label": {
+        "en": "Write an OPC UA variable",
+        "fr": "Écrire une variable OPC UA",
+        "de": "OPC-UA-Variable schreiben",
+        "es": "Escribir una variable OPC UA"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Writes a value to a variable declared \"write\", once writing is allowed.",
+        "fr": "Écrit une valeur dans une variable déclarée « write », une fois l'écriture autorisée.",
+        "de": "Schreibt einen Wert in eine als „write“ deklarierte Variable, sobald Schreiben erlaubt ist.",
+        "es": "Escribe un valor en una variable declarada «write», una vez permitida la escritura."
+      },
+      "timeout_seconds": 20,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "key": "variable",
+          "type": "string",
+          "label": {
+            "en": "Variable (name or NodeId)",
+            "fr": "Variable (nom ou NodeId)",
+            "de": "Variable (Name oder NodeId)",
+            "es": "Variable (nombre o NodeId)"
+          },
           "required": true
-        }
-      ],
-      "outputs": [
+        },
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "value",
+          "type": "string",
+          "label": {
+            "en": "Value",
+            "fr": "Valeur",
+            "de": "Wert",
+            "es": "Valor"
+          },
+          "required": true
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "server_overview",
+      "label": {
+        "en": "OPC UA server",
+        "fr": "Serveur OPC UA",
+        "de": "OPC-UA-Server",
+        "es": "Servidor OPC UA"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "The first values of the server and the health of its link.",
+        "fr": "Les premières valeurs du serveur et l'état de sa liaison.",
+        "de": "Die ersten Werte des Servers und der Zustand seiner Verbindung.",
+        "es": "Los primeros valores del servidor y el estado de su enlace."
+      },
+      "icon": "cpu",
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Server",
+            "fr": "Serveur",
+            "de": "Server",
+            "es": "Servidor"
+          }
+        }
+      ]
     }
   ]
 }

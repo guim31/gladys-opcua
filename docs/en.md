@@ -1,61 +1,155 @@
-# Demo Devices Template
+# OPC UA
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Read and write the variables of an OPC UA server from Gladys: PLCs (Siemens
+S7-1200/1500, Beckhoff TwinCAT, WAGO, B&R, Schneider), gateways (Kepware,
+Softing, Unified Automation) or any OPC UA server on your network.
+
+> Developed without the hardware: feedback welcome. The integration was tested
+> against the Microsoft OPC PLC simulator, not against a real PLC.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- One Gladys device for the server, one feature per variable you declare:
+  numbers (with their unit), on/off values and texts.
+- Values updated by **subscription**: the server says when a value changes,
+  nothing is polled.
+- Writing, off by default: a dashboard switch or setpoint, a configuration
+  button and a scene action write the variables you allowed.
+- Three scene triggers (server lost, server back, variable in a bad state)
+  and an **OPC UA server** dashboard widget.
+
+## Requirements
+
+- Gladys 5.1 or later.
+- An OPC UA server reachable from Gladys over TCP (`opc.tcp://`), with a fixed
+  IP address. On a Siemens S7-1500, turn on the OPC UA server of the CPU in TIA
+  Portal and allow access to the data blocks you want to read.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+### Server
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+1. Enter the **server address**: `opc.tcp://`, the IP address and the port,
+   for example `opc.tcp://192.168.1.50:4840` (4840 by default, 4852 on
+   Beckhoff, 49320 on Kepware).
+2. Choose the **security mode**, and a **user name** and **password** if the
+   server does not accept anonymous access.
+3. Save, then press **Browse the server** to list its variables.
+
+Gladys identifies the server by the address and port typed here: changing them
+creates a new device.
+
+### Security and certificate
+
+- **None**: no signature, no encryption. Fine on an isolated machine network.
+- **Sign** or **Sign & Encrypt**, with the **security policy** the server
+  accepts (Basic256Sha256 is the most common). Gladys creates its own
+  certificate (`Gladys Assistant OPC UA`, stored in the integration's data)
+  on the first connection. Most servers reject an unknown certificate: trust
+  it in the server (TIA Portal: certificate manager, Kepware: OPC UA
+  Configuration Manager, TwinCAT: `rejected` folder moved to `trusted`), then
+  wait a minute, Gladys tries again by itself.
+- The server certificate is accepted on first use and kept.
+- With the None mode, a password may cross the network in clear text: prefer
+  Sign & Encrypt when the server asks for one.
+
+### Variables
+
+The **Variables** field holds entries separated by semicolons:
+
+```
+Name: NodeId [kind] [write] [options]
+```
+
+```
+Flow: ns=3;s="Boiler"."FlowTemp" temperature; Pump: ns=3;s="Boiler"."Pump" switch; Mode: ns=2;s=Plant.Mode write
+```
+
+- **NodeId**: copied from **Browse the server**: `ns=3;s=Text` (string),
+  `ns=2;i=1002` (number), `g=` (GUID), `b=` (opaque). The semicolon inside a
+  NodeId is understood. A NodeId stops at the first space, except between
+  double quotes (Siemens names such as `ns=3;s="DB1"."Temp"` work as they are).
+  `nsu=` NodeIds are not supported.
+- **Name**: optional; without it, the variable takes its name on the server.
+- **Kind** (optional): `temperature`, `humidity`, `pressure`, `power`,
+  `energy`, `production`, `solar_power`, `grid_power`, `voltage`, `current`,
+  `battery`, `volume`, `duration`, `value`, `binary`, `switch`, `setpoint`,
+  `text`. Without a kind: a Boolean is an on/off value, a number a plain
+  value, a string or a date a text. `energy` and `production` are published in
+  kWh, so Gladys computes the consumption and its cost.
+- **write**: the variable may be written from Gladys (see below). `switch`
+  and `setpoint` imply it.
+- **Options**: `scale=0.1` and `offset=-40` (value = raw × scale + offset),
+  `unit=kWh`, `min=` and `max=` (display bounds), `precision=1` (decimals).
+
+Up to 100 variables. Arrays and structures are not supported. **Check the
+configuration** lists the entries that are wrong or missing on the server.
+
+### Writing
+
+Writing is off until you turn on **Allow writing**. Then:
+
+- a variable declared `switch` (Boolean) or `setpoint` (temperature) gets a
+  control on the dashboard. They are on/off inputs and water-heater
+  setpoints for Gladys, never switches or thermostats: voice assistants do
+  not drive them;
+- any variable declared `write` can be written by the **Write a value** button
+  and the **Write an OPC UA variable** scene action, by its name or NodeId:
+  numbers (scale and offset reversed, range of the integer type checked),
+  0/1 or true/false, texts for a String variable.
+
+The server must allow the write too. Writing a wrong variable can stop or
+damage an installation: declare `write` only what Gladys must change.
 
 ## Actions
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+- **Browse the server**: lists up to 60 variables (NodeId, type, access) from
+  the Objects folder, or from the NodeId of a folder given as start node.
+- **Check the configuration**: whether the server is connected, with which
+  security, and the mistakes entry by entry.
+- **Write a value**: writes a value to a declared variable.
 
 ## Scenes
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+- **The OPC UA server is lost** (trigger), with the error as a variable.
+- **The OPC UA server is back** (trigger).
+- **An OPC UA variable turns bad** (trigger): the server reports a bad status
+  (sensor fault, input lost), with the variable name and the status.
+- **Write an OPC UA variable** (action).
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+The values themselves are features: use the usual "device value" triggers
+and conditions of Gladys for thresholds.
 
 ## Dashboard
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+The **OPC UA server** widget shows the first six values and the health of the
+link: connected or not, security, variables in a good state, time of the last
+value.
+
+## Limits
+
+- One server per integration.
+- Gladys accepts 300 values a minute: the values are sent every sampling
+  interval, or less often with many variables (100 variables: every 25 s).
+  Only the changes are sent, and an unchanged value every 6 hours.
+- The container has no broadcast: no automatic discovery of servers, type
+  the address.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **The server does not answer**: check the address and the port, and that
+  the PLC accepts connections from the Gladys host (firewall).
+- **The server refuses the Gladys certificate**: trust it in the server, see
+  above.
+- **The server refuses the user name or password**: check them, or the
+  anonymous access setting of the server.
+- **No endpoint with this security mode**: choose the mode and policy listed by
+  the server.
+- Detailed logs: set `LOG_LEVEL=debug` on the integration.
+
+## Credits
+
+Built on [node-opcua](https://github.com/node-opcua/node-opcua) (MIT) by
+Etienne Rossignon and contributors. OPC UA is a standard of the OPC
+Foundation. This integration is not affiliated with the OPC Foundation nor
+with any PLC manufacturer.
