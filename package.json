@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-opcua",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "OPC UA integration for Gladys Assistant: read and write the variables of an OPC UA server.",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,12 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@gladysassistant/integration-sdk": "^0.16.1"
+    "@gladysassistant/integration-sdk": "^0.16.1",
+    "node-opcua-basic-types": "2.187.32",
+    "node-opcua-certificate-manager": "2.187.32",
+    "node-opcua-client": "2.187.32",
+    "node-opcua-debug": "2.186.7",
+    "node-opcua-nodeid": "2.187.32"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

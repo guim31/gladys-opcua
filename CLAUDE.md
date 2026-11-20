@@ -9,15 +9,16 @@ A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
 no build step) that runs in its own sandboxed Docker container and talks to
 Gladys through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+with [node-opcua](https://github.com/node-opcua/node-opcua) for the OPC UA
+client. It started from the official JavaScript template.
 
 ## Commands
 
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "write"   # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -32,15 +33,19 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+src/app.js                        every SDK handler, shared by index.js and the tests
+src/hub.js                        one server: link events, device, values, flush, writes, triggers
+src/opcua/client.js               the only node-opcua user: connection, session, subscription, browse
+src/variables.js                  the "Variables" field: entries, NodeIds, options, feature keys
+src/values.js                     OPC UA values <-> Gladys states, write conversion and range checks
+src/kinds.js                      kinds (temperature, energy, switch...) -> category/type/unit
+src/actions.js                    browse, check_config, write_value (button and scene action)
+src/widgets.js                    the "OPC UA server" widget
+src/messages.js, src/i18n.js      the four languages of every text the container sends
+src/config.js, src/security.js    DEFAULT_CONFIG (mirrors the manifest) + normalization
+src/store.js                      /data cache of the variables' types (restart with the server off)
+scripts/live-check.mjs            run against a real server (OPC PLC), never by npm test
+test/                             node --test, fake Gladys of the SDK + fake OPC UA server
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -58,7 +63,7 @@ test/                             node --test, against the SDK's fake Gladys (in
   one, `0`/`0` for a feature without a range (text, image...). A missing one
   can pass the publication on a core that does not check it, then fail when
   the user clicks "Add" (HTTP 422 `t_device_feature.min cannot be null`). The
-  SDK's fake Gladys refuses it on publication, and `test/devices.test.js`
+  SDK's fake Gladys refuses it on publication, and `test/gladys-rules.test.js`
   checks them.
 - **The container rootfs is read-only.** Write only under `/data`, the one
   writable volume. Never log tokens, passwords or API keys.
@@ -78,8 +83,8 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** is in English, French, German and Spanish: action
+  messages, manifest texts, and `docs/*.md`, kept in sync.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -259,3 +264,44 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Intégration OPC UA (propre à ce dépôt)
+
+- **Un serveur, un appareil** : `server:<hôte>-<port>` tel que saisi (pas l'ApplicationUri du serveur,
+  inconnu tant qu'il est éteint). Une fonctionnalité par variable : `v-<slug du NodeId>-<sha1 8>` du NodeId
+  **canonique** (`resolveNodeId().toString()`, donc `i=85` devient `ns=0;i=85`). Ne jamais changer ce calcul.
+- **Syntaxe** : `Nom: NodeId nature write options`, entrées séparées par `;`. Un morceau finissant par
+  `ns=<n>` est recollé au suivant ; les guillemets doubles (noms Siemens `"DB"."Membre"`) restent dans le
+  NodeId et protègent les espaces. `nsu=` non pris en charge.
+- **Abonnement, pas de sondage** : `should_poll: false`. Les valeurs reçues sont gardées (la dernière par
+  variable) et un flush publie par `publishChangedStates` toutes les `max(intervalle, n × 60 s / 240)` :
+  100 variables = 25 s. Heartbeat 6 h, vérifié toutes les heures.
+- **Types** lus à la connexion (NodeClass, DataType, ValueRank, UserAccessLevel, DisplayName, Value) et mis en
+  cache dans `/data/opcua-variables.json` : l'appareil reste publiable serveur éteint. Le type retenu est
+  celui du Variant lu s'il existe (une énumération arrive en Int32), sinon le DataType de l'espace 0.
+- **Int64/UInt64** : node-opcua les donne en `[haut, bas]` (uint32) ; conversion par BigInt
+  (`BigInt.asIntN(64, …)`), sinon -2 devient 0. À l'écriture : `coerceInt64`.
+- **Écriture** : `allow_write` global **et** `write` sur la variable **et** droit d'écriture du serveur.
+  Seuls `switch` (input/binary) et `setpoint` (water-heater/target-temperature) ont une commande sur le
+  tableau de bord ; le reste s'écrit par l'action ou l'action de scène `write_value`.
+
+### Pièges de node-opcua (vérifiés contre opc-plc, 20/11/2026)
+
+- **Il écrit sur la console** des messages entiers sur des dizaines de lignes (réponses de publication
+  arrivées après la fermeture de session, notamment à l'arrêt) : `setErrorLogger`/`setWarningLogger` de
+  `node-opcua-debug` les renvoient au niveau debug, une ligne chacun. Terminer la subscription **avant**
+  `session.close()` évite la plupart.
+- Importer `node-opcua-client` coûte ~95 Mo de RSS (≈105 Mo en marche) : chargé paresseusement
+  (`src/app.js`) pour que les tests et le test du manifeste ne le paient pas.
+- `OPCUACertificateManager` n'est pas réexporté par `node-opcua-client` : dépendance directe
+  `node-opcua-certificate-manager`, `rootFolder: /data/pki`. Le certificat client est créé à la première
+  connexion (quelques secondes) ; `applicationUri` fixe (`urn:gladys-opcua:client`), car le nom d'hôte du
+  conteneur change à chaque recréation.
+- `connectionStrategy.maxRetry: -1` : node-opcua réessaie la première connexion et chaque perte de canal
+  (événements `backoff`, `connection_lost`, `connection_reestablished`) et transfère la subscription. Une
+  **session refusée** (mot de passe, certificat) n'est pas réessayée : le client est fermé et rouvert
+  toutes les minutes.
+- `endpointMustExist: false` : beaucoup d'automates annoncent dans leurs endpoints un autre nom d'hôte
+  que l'adresse saisie.
+- Faux Gladys du SDK : `fake.transports` enregistre `{ device_external_id, transport }` à plat, pas le
+  tableau passé à `publishTransports`.

@@ -30,6 +30,22 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration keeps and sends:
+
+- `/data/pki`: the private key and certificate of the OPC UA client, created on
+  the first connection, and the server certificates accepted on first use
+  (trust on first use: Gladys has no screen to approve one by hand).
+- `/data/opcua-variables.json`: the type and access of each declared variable,
+  no secret.
+- The OPC UA password is stored by Gladys with the configuration (a `secret`
+  field), never logged nor written under `/data`. With the security mode None
+  it may cross the network in clear text.
+- Network: only the TCP connection to the server address typed by the user. No
+  cloud service, no inbound port.
+- Writes reach the server only when the user turned on "Allow writing", and only
+  for the variables declared `write`.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+the OPC UA servers and PLCs the integration talks to, and the node-opcua library
+(report to [its project](https://github.com/node-opcua/node-opcua)).
