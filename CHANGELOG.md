@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-20
+
 ### Added
 
 - Read the variables of an OPC UA server (PLCs, gateways): one Gladys device
@@ -26,3 +28,6 @@ the notes of the version's GitHub Release.
 - Scene triggers: server lost, server back, variable in a bad state.
 - "OPC UA server" dashboard widget.
 - Documentation in English, French, German and Spanish.
+
+[Unreleased]: https://github.com/guim31/gladys-opcua/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-opcua/releases/tag/v1.0.0
